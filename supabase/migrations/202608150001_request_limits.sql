@@ -8,6 +8,7 @@ create table if not exists public.request_limits (
 alter table public.request_limits enable row level security;
 
 revoke all on table public.request_limits from public, anon, authenticated;
+grant select, insert, update on table public.request_limits to service_role;
 
 create or replace function public.consume_analysis_quota(
   p_visitor_hash text,
@@ -19,7 +20,7 @@ returns table (
   reset_at timestamptz
 )
 language plpgsql
-security definer
+security invoker
 set search_path = public, pg_temp
 as $$
 declare

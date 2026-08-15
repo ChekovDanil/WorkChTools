@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.55.0";
 
 const appOrigin = Deno.env.get("APP_ORIGIN") || "https://chekovdanil.github.io";
 
@@ -114,7 +114,10 @@ Deno.serve(async (request) => {
   try {
     const apiKey = Deno.env.get("OPENAI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+    const serviceRoleKey = secretKeys
+      ? JSON.parse(secretKeys).default
+      : Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!apiKey || !supabaseUrl || !serviceRoleKey) throw new Error("Backend secrets are not configured");
 
     const body = await request.json();
