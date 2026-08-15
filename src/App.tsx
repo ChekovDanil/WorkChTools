@@ -9,17 +9,17 @@ import {
   Clock3,
   Copy,
   Download,
+  FileText,
   Goal,
   HelpCircle,
   LoaderCircle,
   RotateCcw,
   ShieldCheck,
   Sparkles,
-  Target,
-  WandSparkles,
+  Zap,
 } from "lucide-react";
 import { analyzeText } from "./api";
-import { exampleInput } from "./demo";
+import { examples } from "./demo";
 import type { Analysis, EvidenceStatus, Priority } from "./types";
 
 const MAX_CHARS = 12000;
@@ -43,6 +43,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [isDemo, setIsDemo] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [quota, setQuota] = useState({ limit: 4, remaining: 4, resetAt: null as string | null });
   const resultRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function App() {
       const response = await analyzeText(text.trim());
       setResult(response.analysis);
       setIsDemo(response.demo);
+      setQuota({ limit: response.limit, remaining: response.remaining, resetAt: response.resetAt });
       window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Произошла неизвестная ошибка");
@@ -110,37 +112,44 @@ export default function App() {
         </a>
         <div className="topbar-meta">
           <span className="status-dot"><i /> Данные не сохраняются</span>
+          <span className="quota-chip"><Zap size={13} /> {isDemo ? "Демо без лимита" : `${quota.remaining} из ${quota.limit} осталось`}</span>
           <a href="https://github.com/ChekovDanil/WorkChTools" target="_blank" rel="noreferrer">GitHub <ArrowRight size={15} /></a>
         </div>
       </header>
 
       <main id="top">
         <section className="hero">
-          <div className="eyebrow"><Sparkles size={14} /> AI-ассистент для ясных действий</div>
-          <h1>Из хаотичного текста —<br /><span>в готовый рабочий план.</span></h1>
-          <p>Вставьте заметки, письмо или описание проекта. WorkPilot выделит цели, задачи, сроки и риски — без таблиц и ручной сортировки.</p>
-          <div className="trust-row">
-            <span><CheckCircle2 size={16} /> Структурированный результат</span>
-            <span><ShieldCheck size={16} /> Без регистрации</span>
-            <span><Clock3 size={16} /> Около 30 секунд</span>
+          <div className="hero-copy">
+            <div className="eyebrow"><Sparkles size={14} /> AI-планировщик задач</div>
+            <h1>Превратите текст<br />в <span>понятный план</span></h1>
+            <p>Вставьте заметки со встречи, письмо клиента или описание проекта. Получите цели, задачи, сроки и риски в одной структуре.</p>
+            <div className="trust-row">
+              <span><ShieldCheck size={16} /> Без регистрации</span>
+              <span><Clock3 size={16} /> Результат за ~30 секунд</span>
+            </div>
+          </div>
+          <div className="flow-card" aria-label="Как работает WorkPilot">
+            <span className="flow-label">Как это работает</span>
+            <div><b>1</b><p><strong>Вставьте текст</strong><small>От 40 до 12 000 символов</small></p></div>
+            <div><b>2</b><p><strong>GPT разберёт содержание</strong><small>Без выдуманных дат и исполнителей</small></p></div>
+            <div><b>3</b><p><strong>Заберите готовый план</strong><small>Редактируйте, копируйте или скачайте</small></p></div>
           </div>
         </section>
 
         <section className="composer" aria-label="Анализ текста">
           <div className="composer-head">
             <div>
-              <span className="step-number">01</span>
-              <h2>Добавьте исходный текст</h2>
+              <span className="composer-icon"><FileText size={18} /></span>
+              <span><small>Исходный материал</small><h2>Что нужно разобрать?</h2></span>
             </div>
-            <button className="example-button" type="button" onClick={() => setText(exampleInput)}>
-              <WandSparkles size={16} /> Вставить пример
-            </button>
+            <span className="daily-limit"><Zap size={14} /> До 4 анализов за 24 часа</span>
           </div>
+          <div className="example-row"><span>Попробовать пример:</span>{examples.map((example) => <button type="button" key={example.label} onClick={() => setText(example.text)}>{example.label}</button>)}</div>
           <div className="editor-wrap">
             <textarea
               value={text}
               onChange={(event) => setText(event.target.value.slice(0, MAX_CHARS))}
-              placeholder="Например: Нужно подготовить запуск нового продукта к концу месяца. Марина отвечает за тексты..."
+              placeholder="Вставьте сюда заметки, письмо или описание проекта…"
               aria-label="Текст для анализа"
             />
             <div className="editor-footer">
@@ -151,16 +160,16 @@ export default function App() {
           {error && <div className="error-message" role="alert"><AlertTriangle size={17} /> {error}</div>}
           <div className="composer-actions">
             <button className="primary-button" type="button" disabled={!canAnalyze} onClick={handleAnalyze}>
-              {loading ? <><LoaderCircle className="spin" size={19} /> Анализируем…</> : <><Sparkles size={18} /> Создать рабочий план <ArrowRight size={18} /></>}
+              {loading ? <><LoaderCircle className="spin" size={19} /> Собираем план…</> : <><Sparkles size={18} /> Разобрать текст <ArrowRight size={18} /></>}
             </button>
-            <p>Отправляя текст, вы соглашаетесь не добавлять конфиденциальные данные.</p>
+            <p><ShieldCheck size={14} /> Текст не сохраняется. Не добавляйте конфиденциальные данные.</p>
           </div>
         </section>
 
         {!result && (
           <section className="preview-strip" aria-label="Состав результата">
-            <span>Результат</span>
-            <div className="preview-item"><Target size={18} /><b>Цели</b><small>Что должно измениться</small></div>
+            <span>На выходе</span>
+            <div className="preview-item"><Goal size={18} /><b>Цели</b><small>Что должно измениться</small></div>
             <div className="preview-item"><ClipboardCheck size={18} /><b>Задачи</b><small>Кто и что делает</small></div>
             <div className="preview-item"><Clock3 size={18} /><b>Сроки</b><small>Явные и предложенные</small></div>
             <div className="preview-item"><AlertTriangle size={18} /><b>Риски</b><small>Что может помешать</small></div>
@@ -210,7 +219,7 @@ export default function App() {
                   <div className="task-row task-head"><span>Задача</span><span>Ответственный</span><span>Срок</span><span>Приоритет</span></div>
                   {result.tasks.map((task) => (
                     <div className={`task-row ${completed.has(task.id) ? "done" : ""}`} key={task.id}>
-                      <span className="task-name"><button type="button" aria-label={`Отметить задачу «${task.title}»`} onClick={() => toggleTask(task.id)}>{completed.has(task.id) && <Check size={13} />}</button><span><b>{task.title}</b><small>{task.rationale}</small></span></span>
+                      <span className="task-name"><button type="button" aria-label={`Отметить задачу «${task.title}»`} onClick={() => toggleTask(task.id)}>{completed.has(task.id) && <Check size={13} />}</button><span><b>{task.title}</b><small>{task.rationale}</small><span className="task-mobile-meta"><em>{task.owner || "Не назначен"}</em><em>{task.deadline || deadlineLabels[task.deadlineStatus]}</em></span></span></span>
                       <span>{task.owner || "Не назначен"}</span>
                       <span>{task.deadline || deadlineLabels[task.deadlineStatus]}<em className={`evidence ${task.deadlineStatus}`}>{deadlineLabels[task.deadlineStatus]}</em></span>
                       <span><em className={`priority ${task.priority}`}>{priorityLabels[task.priority]}</em></span>
@@ -247,7 +256,7 @@ export default function App() {
         )}
       </main>
 
-      <footer><span>WorkPilot Brief <b>v0.1</b></span><p>Из заметок — в ясные действия.</p><span>2026</span></footer>
+      <footer><span>WorkPilot Brief <b>v0.2</b></span><p>Из заметок — в ясные действия.</p><span>2026</span></footer>
     </div>
   );
 }
