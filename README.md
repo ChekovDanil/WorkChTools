@@ -15,6 +15,7 @@ npm run dev
 
 - **Frontend:** React, TypeScript, Vite, PWA; публикуется через GitHub Pages.
 - **Backend:** `supabase/functions/analyze`; хранит OpenAI API key и возвращает Structured Output.
+- **Production API:** `https://pvikazfotedxufinbimi.supabase.co/functions/v1/analyze`.
 - **Лимит:** 4 обращения к анализатору за скользящие 24 часа; счётчик обновляется атомарно в PostgreSQL.
 - **Данные:** исходный текст и результат не сохраняются на сервере; черновик хранится только в браузере пользователя.
 - **Приватность лимита:** сервер хранит только SHA-256 идентификатора с секретной солью, без исходного IP и без текста запроса.
@@ -33,7 +34,7 @@ supabase secrets set RATE_LIMIT_SALT=A_LONG_RANDOM_VALUE
 ```
 
 4. Опубликуйте функцию: `supabase functions deploy analyze --no-verify-jwt`.
-5. В GitHub → Settings → Secrets and variables → Actions → Variables создайте `VITE_API_URL` со значением URL функции.
+5. Укажите публичный URL функции как `VITE_API_URL` во время сборки GitHub Pages.
 6. Повторно запустите workflow `Deploy to GitHub Pages`.
 
 ## GitHub Pages
