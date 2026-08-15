@@ -11,7 +11,7 @@
     {
       "binding": "DB",
       "database_name": "workpilot-rate-limits",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "f9196828-bab6-469a-939a-b2302b35e7aa",
       "migrations_dir": "migrations"
     }
   ],
