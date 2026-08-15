@@ -187,6 +187,51 @@ function hasString(value: Record<string, unknown>, key: string): boolean {
   return typeof value[key] === "string";
 }
 
+function nullableString(value: unknown): unknown {
+  if (value === null) return null;
+  if (typeof value !== "string") return value;
+  const normalized = value.trim().toLowerCase();
+  return ["null", "none", "n/a", "не указан", "не указано", "нет"].includes(normalized) ? null : value;
+}
+
+function isPlaceholder(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized.startsWith("нет информации") || normalized.startsWith("информация отсутствует") || normalized.startsWith("no information");
+}
+
+function normalizeAnalysisCandidate(value: unknown): unknown {
+  if (!isRecord(value)) return value;
+
+  const goals = Array.isArray(value.goals)
+    ? value.goals.map((goal) => isRecord(goal) ? { ...goal, successMetric: nullableString(goal.successMetric) } : goal)
+    : value.goals;
+  const tasks = Array.isArray(value.tasks)
+    ? value.tasks.map((task) => {
+      if (!isRecord(task)) return task;
+      const normalizedDeadline = nullableString(task.deadline);
+      const unusableDeadline = typeof normalizedDeadline === "string" &&
+        ["explicit", "inferred", "missing"].includes(normalizedDeadline.trim().toLowerCase());
+      const deadline = task.deadlineStatus === "missing" || unusableDeadline ? null : normalizedDeadline;
+      const deadlineStatus = deadline === null ? "missing" : task.deadlineStatus;
+      return {
+        ...task,
+        owner: nullableString(task.owner),
+        deadline,
+        deadlineStatus,
+      };
+    })
+    : value.tasks;
+  const risks = Array.isArray(value.risks)
+    ? value.risks.filter((risk) => !(
+      isRecord(risk) &&
+      (isPlaceholder(risk.title) || (isPlaceholder(risk.evidence) && isPlaceholder(risk.mitigation)))
+    ))
+    : value.risks;
+
+  return { ...value, goals, tasks, risks };
+}
+
 function isAnalysis(value: unknown): value is Analysis {
   if (!isRecord(value) || !hasString(value, "title") || !hasString(value, "summary")) return false;
   if (typeof value.confidence !== "number" || value.confidence < 0 || value.confidence > 100) return false;
@@ -199,12 +244,12 @@ function isAnalysis(value: unknown): value is Analysis {
 
 function parseAiResponse(result: unknown): Analysis | null {
   if (!isRecord(result)) return null;
-  const response = result.response;
+  const response = normalizeAnalysisCandidate(result.response);
   if (isAnalysis(response)) return response;
   if (typeof response !== "string") return null;
 
   try {
-    const parsed: unknown = JSON.parse(response);
+    const parsed: unknown = normalizeAnalysisCandidate(JSON.parse(response));
     return isAnalysis(parsed) ? parsed : null;
   } catch {
     return null;
@@ -250,7 +295,7 @@ async function handleAnalyze(request: Request, env: Env): Promise<Response> {
       messages: [
         {
           role: "system",
-          content: `Ты — деловой аналитик WorkPilot. Преврати исходный текст в краткий выполнимый план на языке пользователя. Сегодня ${today}, часовой пояс ${timezone}. Используй только факты из текста. Не выдумывай владельцев, бюджеты или даты. Если дата предложена тобой, отметь inferred; если отсутствует — missing и null. Evidence должен быть короткой цитатой из текста. Риски без прямого основания допускаются только как очевидные операционные риски и должны иметь честную формулировку. Confidence — число 0–100. Вопросы задавай только те, ответы на которые влияют на выполнение.`,
+          content: `Ты — деловой аналитик WorkPilot. Преврати исходный текст в краткий выполнимый план на языке пользователя. Сегодня ${today}, часовой пояс ${timezone}. Используй только факты из текста. Не выдумывай владельцев, бюджеты или даты. Поле deadline должно содержать сам текст срока, например "к пятнице", а не слова explicit, inferred или missing. Относительная дата, прямо указанная пользователем, считается explicit. Если дата предложена тобой, отметь inferred; если отсутствует — missing и используй настоящий JSON null, никогда строку "null". Для отсутствующих owner и successMetric также используй настоящий JSON null. Evidence должен быть короткой цитатой из текста. Риски без прямого основания допускаются только как очевидные операционные риски и должны иметь честную формулировку. Если рисков или вопросов нет, верни пустой массив без заглушек вроде "нет информации". taskIds должны точно совпадать с id задач. Confidence — число 0–100. Вопросы задавай только те, ответы на которые влияют на выполнение.`,
         },
         { role: "user", content: text },
       ],
