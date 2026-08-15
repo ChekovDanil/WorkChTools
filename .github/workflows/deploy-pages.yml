@@ -24,8 +24,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Build without VITE_API_URL to keep the public portfolio in local demo mode.
-      - run: npm run build
+      - name: Build production app
+        run: npm run build
+        env:
+          VITE_API_URL: https://workpilot-api.chekov-99.workers.dev/analyze
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
