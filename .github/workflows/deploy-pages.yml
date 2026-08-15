@@ -24,9 +24,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Build without VITE_API_URL to keep the public portfolio in local demo mode.
       - run: npm run build
-        env:
-          VITE_API_URL: https://pvikazfotedxufinbimi.supabase.co/functions/v1/analyze
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
