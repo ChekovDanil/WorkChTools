@@ -94,7 +94,10 @@ async function visitorHash(request: Request): Promise<string> {
   const forwardedIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const connectingIp = request.headers.get("cf-connecting-ip")?.trim();
   const browserId = request.headers.get("x-workpilot-visitor")?.trim();
-  const identity = forwardedIp || connectingIp || browserId;
+  const networkId = forwardedIp || connectingIp;
+  const identity = browserId
+    ? `${browserId}:${networkId || "unknown-network"}`
+    : networkId;
   const salt = Deno.env.get("RATE_LIMIT_SALT");
 
   if (!identity || !salt) throw new Error("Rate limit identity is not configured");

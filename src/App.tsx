@@ -41,7 +41,7 @@ export default function App() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isDemo, setIsDemo] = useState(false);
+  const [isDemo, setIsDemo] = useState(!import.meta.env.VITE_API_URL);
   const [copied, setCopied] = useState(false);
   const [quota, setQuota] = useState({ limit: 4, remaining: 4, resetAt: null as string | null });
   const resultRef = useRef<HTMLElement>(null);
