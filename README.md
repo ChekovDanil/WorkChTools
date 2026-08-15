@@ -14,8 +14,8 @@ npm run dev
 ## Архитектура
 
 - **Frontend:** React, TypeScript, Vite, PWA; публикуется через GitHub Pages.
-- **Новый backend:** `cloudflare-worker`; использует Workers AI без стороннего API-ключа и возвращает структурированный JSON.
-- **Текущая публичная версия:** локальный деморежим без API-ключа и расходов.
+- **Backend:** `cloudflare-worker`; использует Workers AI без стороннего API-ключа и возвращает структурированный JSON.
+- **Публичная версия:** GitHub Pages обращается к развёрнутому Cloudflare Worker.
 - **Предыдущий backend:** `supabase/functions/analyze`; оставлен в репозитории как резервный вариант.
 - **Лимит:** 4 обращения к анализатору за скользящие 24 часа; счётчик обновляется атомарно в Cloudflare D1.
 - **Данные:** исходный текст и результат не сохраняются на сервере; черновик хранится только в браузере пользователя.
@@ -23,7 +23,7 @@ npm run dev
 
 ## Подключение Cloudflare Workers AI
 
-Инструкции по созданию D1 и публикации Worker находятся в [`cloudflare-worker/README.md`](cloudflare-worker/README.md). После развёртывания укажите URL `/analyze` как `VITE_API_URL` при сборке GitHub Pages.
+Worker развёрнут по адресу [`https://workpilot-api.chekov-99.workers.dev`](https://workpilot-api.chekov-99.workers.dev), а endpoint анализа — `/analyze`. Инструкции по повторному развёртыванию находятся в [`cloudflare-worker/README.md`](cloudflare-worker/README.md).
 
 ## Подключение GPT
 
