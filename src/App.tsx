@@ -186,22 +186,28 @@ export default function App() {
           <section className="onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
             <div className="onboarding-glow one" />
             <div className="onboarding-glow two" />
-            <button className="onboarding-close" type="button" aria-label="Закрыть знакомство с сервисом" onClick={closeOnboarding}><X size={19} /></button>
-            <div className="onboarding-brand"><span className="brand-mark">W</span><span>WorkPilot <b>Brief</b></span></div>
-            <div className="onboarding-kicker"><WandSparkles size={15} /> AI-ассистент для ясных решений</div>
-            <h2 id="onboarding-title">Из рабочего текста — <span>в понятный план</span></h2>
-            <p className="onboarding-lead">Вставьте заметки, письмо или бриф. WorkPilot выделит главное и соберёт структуру для действий.</p>
-            <div className="onboarding-grid">
-              <article><span><BrainCircuit size={21} /></span><div><b>Понимает контекст</b><p>Находит цели, договорённости и важные детали.</p></div></article>
-              <article><span><ListChecks size={21} /></span><div><b>Строит план</b><p>Формирует задачи, сроки и последовательность шагов.</p></div></article>
-              <article><span><ShieldAlert size={21} /></span><div><b>Показывает пробелы</b><p>Подсвечивает риски и вопросы, которые нужно уточнить.</p></div></article>
+            <div className="onboarding-topbar">
+              <div className="onboarding-brand"><span className="brand-mark">W</span><span>WorkPilot <b>Brief</b></span></div>
+              <button className="onboarding-close" type="button" aria-label="Закрыть знакомство с сервисом" onClick={closeOnboarding}><X size={19} /></button>
             </div>
-            <div className="onboarding-usecases"><span>Подходит для:</span><b>встреч</b><b>писем клиентов</b><b>проектных брифов</b></div>
-            <div className="onboarding-actions">
-              <button className="onboarding-primary" type="button" onClick={closeOnboarding}>Начать работу <ArrowUpRight size={18} /></button>
-              <button className="onboarding-secondary" type="button" onClick={openExampleFromOnboarding}><NotebookPen size={18} /> Открыть пример</button>
+            <div className="onboarding-content">
+              <div className="onboarding-kicker"><WandSparkles size={15} /> AI-ассистент для ясных решений</div>
+              <h2 id="onboarding-title">Из рабочего текста — <span>в понятный план</span></h2>
+              <p className="onboarding-lead">Вставьте заметки, письмо или бриф. WorkPilot выделит главное и соберёт структуру для действий.</p>
+              <div className="onboarding-grid">
+                <article><span><BrainCircuit size={21} /></span><div><b>Понимает контекст</b><p>Находит цели, договорённости и важные детали.</p></div></article>
+                <article><span><ListChecks size={21} /></span><div><b>Строит план</b><p>Формирует задачи, сроки и последовательность шагов.</p></div></article>
+                <article><span><ShieldAlert size={21} /></span><div><b>Показывает пробелы</b><p>Подсвечивает риски и вопросы, которые нужно уточнить.</p></div></article>
+              </div>
+              <div className="onboarding-usecases"><span>Подходит для:</span><b>встреч</b><b>писем клиентов</b><b>проектных брифов</b></div>
             </div>
-            <small className="onboarding-privacy"><ShieldCheck size={15} /> Без регистрации. Тексты и результаты не сохраняются.</small>
+            <div className="onboarding-footer">
+              <div className="onboarding-actions">
+                <button className="onboarding-primary" type="button" onClick={closeOnboarding}>Начать работу <ArrowUpRight size={18} /></button>
+                <button className="onboarding-secondary" type="button" onClick={openExampleFromOnboarding}><NotebookPen size={18} /> Открыть пример</button>
+              </div>
+              <small className="onboarding-privacy"><ShieldCheck size={15} /> Без регистрации. Тексты и результаты не сохраняются.</small>
+            </div>
           </section>
         </div>
       )}
