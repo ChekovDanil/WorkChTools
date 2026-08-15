@@ -111,7 +111,7 @@ export default function App() {
           <span>WorkPilot <b>Brief</b></span>
         </a>
         <div className="topbar-meta">
-          <span className="status-dot"><i /> Данные не сохраняются</span>
+          <span className="status-dot"><i /> {isDemo ? "Локальный деморежим" : "Данные не сохраняются"}</span>
           <span className="quota-chip"><Zap size={13} /> {isDemo ? "Демо без лимита" : `${quota.remaining} из ${quota.limit} осталось`}</span>
           <a href="https://github.com/ChekovDanil/WorkChTools" target="_blank" rel="noreferrer">GitHub <ArrowRight size={15} /></a>
         </div>
@@ -125,13 +125,13 @@ export default function App() {
             <p>Вставьте заметки со встречи, письмо клиента или описание проекта. Получите цели, задачи, сроки и риски в одной структуре.</p>
             <div className="trust-row">
               <span><ShieldCheck size={16} /> Без регистрации</span>
-              <span><Clock3 size={16} /> Результат за ~30 секунд</span>
+              <span><Clock3 size={16} /> {isDemo ? "Демо за несколько секунд" : "Результат за ~30 секунд"}</span>
             </div>
           </div>
           <div className="flow-card" aria-label="Как работает WorkPilot">
             <span className="flow-label">Как это работает</span>
             <div><b>1</b><p><strong>Вставьте текст</strong><small>От 40 до 12 000 символов</small></p></div>
-            <div><b>2</b><p><strong>GPT разберёт содержание</strong><small>Без выдуманных дат и исполнителей</small></p></div>
+            <div><b>2</b><p><strong>{isDemo ? "Посмотрите пример разбора" : "GPT разберёт содержание"}</strong><small>{isDemo ? "Без отправки текста во внешний API" : "Без выдуманных дат и исполнителей"}</small></p></div>
             <div><b>3</b><p><strong>Заберите готовый план</strong><small>Редактируйте, копируйте или скачайте</small></p></div>
           </div>
         </section>
@@ -142,8 +142,14 @@ export default function App() {
               <span className="composer-icon"><FileText size={18} /></span>
               <span><small>Исходный материал</small><h2>Что нужно разобрать?</h2></span>
             </div>
-            <span className="daily-limit"><Zap size={14} /> До 4 анализов за 24 часа</span>
+            <span className="daily-limit"><Zap size={14} /> {isDemo ? "Демо без API и лимита" : "До 4 анализов за 24 часа"}</span>
           </div>
+          {isDemo && (
+            <div className="demo-notice" role="status">
+              <Sparkles size={16} />
+              <span><b>Демонстрационный режим.</b> Текст остаётся в браузере, а кнопка показывает пример готового WorkPilot-плана.</span>
+            </div>
+          )}
           <div className="example-row"><span>Попробовать пример:</span>{examples.map((example) => <button type="button" key={example.label} onClick={() => setText(example.text)}>{example.label}</button>)}</div>
           <div className="editor-wrap">
             <textarea
@@ -160,9 +166,9 @@ export default function App() {
           {error && <div className="error-message" role="alert"><AlertTriangle size={17} /> {error}</div>}
           <div className="composer-actions">
             <button className="primary-button" type="button" disabled={!canAnalyze} onClick={handleAnalyze}>
-              {loading ? <><LoaderCircle className="spin" size={19} /> Собираем план…</> : <><Sparkles size={18} /> Разобрать текст <ArrowRight size={18} /></>}
+              {loading ? <><LoaderCircle className="spin" size={19} /> Собираем план…</> : <><Sparkles size={18} /> {isDemo ? "Показать демо-план" : "Разобрать текст"} <ArrowRight size={18} /></>}
             </button>
-            <p><ShieldCheck size={14} /> Текст не сохраняется. Не добавляйте конфиденциальные данные.</p>
+            <p><ShieldCheck size={14} /> {isDemo ? "В деморежиме текст никуда не отправляется." : "Текст не сохраняется. Не добавляйте конфиденциальные данные."}</p>
           </div>
         </section>
 
