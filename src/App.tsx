@@ -2,24 +2,32 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
+  ArrowUpRight,
   BrainCircuit,
   Check,
   CheckCircle2,
   ChevronDown,
+  CircleHelp,
   ClipboardCheck,
   ClipboardPaste,
   Clock3,
   Copy,
   Download,
+  FileDown,
   FileText,
   Goal,
   HelpCircle,
   ListChecks,
   LoaderCircle,
+  NotebookPen,
   RotateCcw,
+  Route,
   ScanText,
+  ShieldAlert,
   ShieldCheck,
+  Target,
   WandSparkles,
+  X,
   Zap,
 } from "lucide-react";
 import { analyzeText } from "./api";
@@ -47,6 +55,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [isDemo, setIsDemo] = useState(!import.meta.env.VITE_API_URL);
   const [copied, setCopied] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem("workpilot-onboarding-seen") !== "1");
   const [quota, setQuota] = useState({ limit: 4, remaining: 4, resetAt: null as string | null });
   const resultRef = useRef<HTMLElement>(null);
 
@@ -54,6 +63,20 @@ export default function App() {
     const id = window.setTimeout(() => localStorage.setItem("workpilot-draft", text), 250);
     return () => window.clearTimeout(id);
   }, [text]);
+
+  useEffect(() => {
+    if (!showOnboarding) return;
+    const previousOverflow = document.body.style.overflow;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeOnboarding();
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [showOnboarding]);
 
   const canAnalyze = text.trim().length >= 40 && !loading;
   const stats = useMemo(() => result ? [
@@ -99,6 +122,25 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
+  function exportPdf() {
+    if (!result) return;
+    const previousTitle = document.title;
+    document.title = `WorkPilot — ${result.title}`;
+    window.addEventListener("afterprint", () => { document.title = previousTitle; }, { once: true });
+    window.print();
+  }
+
+  function closeOnboarding() {
+    localStorage.setItem("workpilot-onboarding-seen", "1");
+    setShowOnboarding(false);
+  }
+
+  function openExampleFromOnboarding() {
+    setText(examples[0].text);
+    closeOnboarding();
+    window.setTimeout(() => document.querySelector(".composer")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  }
+
   function toggleTask(id: string) {
     setCompleted((current) => {
       const next = new Set(current);
@@ -109,6 +151,30 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      {showOnboarding && (
+        <div className="onboarding-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeOnboarding(); }}>
+          <section className="onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+            <div className="onboarding-glow one" />
+            <div className="onboarding-glow two" />
+            <button className="onboarding-close" type="button" aria-label="Закрыть знакомство с сервисом" onClick={closeOnboarding}><X size={19} /></button>
+            <div className="onboarding-brand"><span className="brand-mark">W</span><span>WorkPilot <b>Brief</b></span></div>
+            <div className="onboarding-kicker"><WandSparkles size={15} /> AI-ассистент для ясных решений</div>
+            <h2 id="onboarding-title">Из рабочего текста — <span>в понятный план</span></h2>
+            <p className="onboarding-lead">Вставьте заметки, письмо или бриф. WorkPilot выделит главное и соберёт структуру для действий.</p>
+            <div className="onboarding-grid">
+              <article><span><BrainCircuit size={21} /></span><div><b>Понимает контекст</b><p>Находит цели, договорённости и важные детали.</p></div></article>
+              <article><span><ListChecks size={21} /></span><div><b>Строит план</b><p>Формирует задачи, сроки и последовательность шагов.</p></div></article>
+              <article><span><ShieldAlert size={21} /></span><div><b>Показывает пробелы</b><p>Подсвечивает риски и вопросы, которые нужно уточнить.</p></div></article>
+            </div>
+            <div className="onboarding-usecases"><span>Подходит для:</span><b>встреч</b><b>писем клиентов</b><b>проектных брифов</b></div>
+            <div className="onboarding-actions">
+              <button className="onboarding-primary" type="button" onClick={closeOnboarding}>Начать работу <ArrowUpRight size={18} /></button>
+              <button className="onboarding-secondary" type="button" onClick={openExampleFromOnboarding}><NotebookPen size={18} /> Открыть пример</button>
+            </div>
+            <small className="onboarding-privacy"><ShieldCheck size={15} /> Без регистрации. Тексты и результаты не сохраняются.</small>
+          </section>
+        </div>
+      )}
       <header className="topbar">
         <a className="brand" href="#top" aria-label="WorkPilot Brief — на главную">
           <span className="brand-mark">W</span>
@@ -117,6 +183,7 @@ export default function App() {
         <div className="topbar-meta">
           <span className="status-dot"><i /> {isDemo ? "Локальный деморежим" : "Данные не сохраняются"}</span>
           <span className="quota-chip"><Zap size={13} /> {isDemo ? "Демо без лимита" : `${quota.remaining} из ${quota.limit} осталось`}</span>
+          <button className="about-button" type="button" onClick={() => setShowOnboarding(true)}><CircleHelp size={16} /><span>О сервисе</span></button>
           <a href="https://github.com/ChekovDanil/WorkChTools" target="_blank" rel="noreferrer">GitHub <ArrowRight size={15} /></a>
         </div>
       </header>
@@ -188,6 +255,7 @@ export default function App() {
 
         {result && (
           <section className="results" ref={resultRef} aria-live="polite">
+            <div className="print-header"><span className="brand-mark">W</span><div><strong>WorkPilot Brief</strong><small>Структурированный план по вашему материалу</small></div></div>
             <div className="result-header">
               <div>
                 <div className="eyebrow"><CheckCircle2 size={14} /> План готов {isDemo && <em>Демо</em>}</div>
@@ -196,6 +264,7 @@ export default function App() {
               </div>
               <div className="result-actions">
                 <button type="button" onClick={copyPlan}>{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? "Скопировано" : "Копировать"}</button>
+                <button type="button" onClick={exportPdf}><FileDown size={16} /> Экспорт PDF</button>
                 <button type="button" onClick={downloadPlan}><Download size={16} /> Скачать .md</button>
               </div>
             </div>
@@ -251,11 +320,17 @@ export default function App() {
               </article>
 
               <article className="panel plan-panel">
-                <div className="panel-title"><span className="panel-icon blue"><ArrowRight size={18} /></span><div><small>Следующие действия</small><h3>Готовый план</h3></div></div>
-                <div className="timeline">
+                <div className="plan-panel-head">
+                  <div className="panel-title"><span className="panel-icon blue"><Route size={19} /></span><div><small>Дорожная карта</small><h3>План действий</h3></div></div>
+                  <span className="plan-count"><Target size={15} /> {result.plan.length} {result.plan.length === 1 ? "этап" : result.plan.length < 5 ? "этапа" : "этапов"}</span>
+                </div>
+                <div className="plan-list">
                   {result.plan.map((step) => (
-                    <div className="timeline-step" key={step.order}>
-                      <span>{step.order}</span><div><h4>{step.title}</h4><p>{step.description}</p><small>{step.taskIds.length} {step.taskIds.length === 1 ? "задача" : "задачи"}</small></div>
+                    <div className="plan-step" key={step.order}>
+                      <span className="plan-step-number">{String(step.order).padStart(2, "0")}</span>
+                      <div className="plan-step-title"><small>Этап {step.order}</small><h4>{step.title}</h4></div>
+                      <p>{step.description}</p>
+                      <span className="plan-task-count"><ListChecks size={15} /> {step.taskIds.length} {step.taskIds.length === 1 ? "задача" : "задачи"}</span>
                     </div>
                   ))}
                 </div>
@@ -266,7 +341,7 @@ export default function App() {
         )}
       </main>
 
-      <footer><span>WorkPilot Brief <b>v0.2</b></span><p>Из заметок — в ясные действия.</p><span>2026</span></footer>
+      <footer><span>WorkPilot Brief <b>v0.3</b></span><p>Из заметок — в ясные действия.</p><span>2026</span></footer>
     </div>
   );
 }
