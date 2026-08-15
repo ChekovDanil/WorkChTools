@@ -2,20 +2,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
+  BrainCircuit,
   Check,
   CheckCircle2,
   ChevronDown,
   ClipboardCheck,
+  ClipboardPaste,
   Clock3,
   Copy,
   Download,
   FileText,
   Goal,
   HelpCircle,
+  ListChecks,
   LoaderCircle,
   RotateCcw,
+  ScanText,
   ShieldCheck,
-  Sparkles,
+  WandSparkles,
   Zap,
 } from "lucide-react";
 import { analyzeText } from "./api";
@@ -120,7 +124,7 @@ export default function App() {
       <main id="top">
         <section className="hero">
           <div className="hero-copy">
-            <div className="eyebrow"><Sparkles size={14} /> AI-планировщик задач</div>
+            <div className="eyebrow hero-eyebrow"><span className="eyebrow-icon"><BrainCircuit size={17} /></span> AI-планировщик задач</div>
             <h1>Превратите текст<br />в <span>понятный план</span></h1>
             <p>Вставьте заметки со встречи, письмо клиента или описание проекта. Получите цели, задачи, сроки и риски в одной структуре.</p>
             <div className="trust-row">
@@ -130,9 +134,9 @@ export default function App() {
           </div>
           <div className="flow-card" aria-label="Как работает WorkPilot">
             <span className="flow-label">Как это работает</span>
-            <div><b>1</b><p><strong>Вставьте текст</strong><small>От 40 до 12 000 символов</small></p></div>
-            <div><b>2</b><p><strong>{isDemo ? "Посмотрите пример разбора" : "GPT разберёт содержание"}</strong><small>{isDemo ? "Без отправки текста во внешний API" : "Без выдуманных дат и исполнителей"}</small></p></div>
-            <div><b>3</b><p><strong>Заберите готовый план</strong><small>Редактируйте, копируйте или скачайте</small></p></div>
+            <div><span className="flow-step-icon"><ClipboardPaste size={18} /><i>1</i></span><p><strong>Вставьте текст</strong><small>От 40 до 12 000 символов</small></p></div>
+            <div><span className="flow-step-icon"><BrainCircuit size={18} /><i>2</i></span><p><strong>{isDemo ? "Посмотрите пример разбора" : "AI разберёт содержание"}</strong><small>{isDemo ? "Без отправки текста во внешний API" : "Без выдуманных дат и исполнителей"}</small></p></div>
+            <div><span className="flow-step-icon"><ListChecks size={18} /><i>3</i></span><p><strong>Заберите готовый план</strong><small>Редактируйте, копируйте или скачайте</small></p></div>
           </div>
         </section>
 
@@ -146,7 +150,7 @@ export default function App() {
           </div>
           {isDemo && (
             <div className="demo-notice" role="status">
-              <Sparkles size={16} />
+              <WandSparkles size={17} />
               <span><b>Демонстрационный режим.</b> Текст остаётся в браузере, а кнопка показывает пример готового WorkPilot-плана.</span>
             </div>
           )}
@@ -166,7 +170,7 @@ export default function App() {
           {error && <div className="error-message" role="alert"><AlertTriangle size={17} /> {error}</div>}
           <div className="composer-actions">
             <button className="primary-button" type="button" disabled={!canAnalyze} onClick={handleAnalyze}>
-              {loading ? <><LoaderCircle className="spin" size={19} /> Собираем план…</> : <><Sparkles size={18} /> {isDemo ? "Показать демо-план" : "Разобрать текст"} <ArrowRight size={18} /></>}
+              {loading ? <><span className="button-icon"><LoaderCircle className="spin" size={19} /></span> Собираем план…</> : <><span className="button-icon"><ScanText size={19} /></span> {isDemo ? "Показать демо-план" : "Разобрать текст"} <ArrowRight size={19} /></>}
             </button>
             <p><ShieldCheck size={14} /> {isDemo ? "В деморежиме текст никуда не отправляется." : "Текст не сохраняется. Не добавляйте конфиденциальные данные."}</p>
           </div>
