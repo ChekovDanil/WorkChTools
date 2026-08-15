@@ -20,8 +20,10 @@ import {
   ListChecks,
   LoaderCircle,
   NotebookPen,
+  Pencil,
   RotateCcw,
   Route,
+  Save,
   ScanText,
   ShieldAlert,
   ShieldCheck,
@@ -32,7 +34,7 @@ import {
 } from "lucide-react";
 import { analyzeText } from "./api";
 import { examples } from "./demo";
-import type { Analysis, EvidenceStatus, Priority } from "./types";
+import type { Analysis, EvidenceStatus, Priority, Task } from "./types";
 
 const MAX_CHARS = 12000;
 const priorityLabels: Record<Priority, string> = { high: "Высокий", medium: "Средний", low: "Низкий" };
@@ -56,6 +58,8 @@ export default function App() {
   const [isDemo, setIsDemo] = useState(!import.meta.env.VITE_API_URL);
   const [copied, setCopied] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem("workpilot-onboarding-seen") !== "1");
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [taskDraft, setTaskDraft] = useState<Task | null>(null);
   const [quota, setQuota] = useState({ limit: 4, remaining: 4, resetAt: null as string | null });
   const resultRef = useRef<HTMLElement>(null);
 
@@ -91,6 +95,7 @@ export default function App() {
     setLoading(true);
     setError("");
     setCompleted(new Set());
+    cancelTaskEdit();
     try {
       const response = await analyzeText(text.trim());
       setResult(response.analysis);
@@ -124,10 +129,11 @@ export default function App() {
 
   function exportPdf() {
     if (!result) return;
+    cancelTaskEdit();
     const previousTitle = document.title;
     document.title = `WorkPilot — ${result.title}`;
     window.addEventListener("afterprint", () => { document.title = previousTitle; }, { once: true });
-    window.print();
+    window.setTimeout(() => window.print(), 50);
   }
 
   function closeOnboarding() {
@@ -147,6 +153,30 @@ export default function App() {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+  }
+
+  function startTaskEdit(task: Task) {
+    setEditingTaskId(task.id);
+    setTaskDraft({ ...task });
+  }
+
+  function cancelTaskEdit() {
+    setEditingTaskId(null);
+    setTaskDraft(null);
+  }
+
+  function saveTaskEdit() {
+    if (!result || !taskDraft || !taskDraft.title.trim()) return;
+    const deadline = taskDraft.deadline?.trim() || null;
+    const updatedTask: Task = {
+      ...taskDraft,
+      title: taskDraft.title.trim(),
+      owner: taskDraft.owner?.trim() || null,
+      deadline,
+      deadlineStatus: deadline ? "explicit" : "missing",
+    };
+    setResult({ ...result, tasks: result.tasks.map((task) => task.id === updatedTask.id ? updatedTask : task) });
+    cancelTaskEdit();
   }
 
   return (
@@ -293,16 +323,29 @@ export default function App() {
               </article>
 
               <article className="panel tasks-panel">
-                <div className="panel-title"><span className="panel-icon mint"><ClipboardCheck size={18} /></span><div><small>Исполнение</small><h3>Задачи и ответственность</h3></div></div>
+                <div className="tasks-panel-head">
+                  <div className="panel-title"><span className="panel-icon mint"><ClipboardCheck size={18} /></span><div><small>Исполнение</small><h3>Задачи и ответственность</h3></div></div>
+                  <span className="local-edit-hint"><Pencil size={14} /> Можно редактировать локально</span>
+                </div>
                 <div className="task-table">
                   <div className="task-row task-head"><span>Задача</span><span>Ответственный</span><span>Срок</span><span>Приоритет</span></div>
                   {result.tasks.map((task) => (
-                    <div className={`task-row ${completed.has(task.id) ? "done" : ""}`} key={task.id}>
-                      <span className="task-name"><button type="button" aria-label={`Отметить задачу «${task.title}»`} onClick={() => toggleTask(task.id)}>{completed.has(task.id) && <Check size={13} />}</button><span><b>{task.title}</b><small>{task.rationale}</small><span className="task-mobile-meta"><em>{task.owner || "Не назначен"}</em><em>{task.deadline || deadlineLabels[task.deadlineStatus]}</em></span></span></span>
-                      <span>{task.owner || "Не назначен"}</span>
-                      <span>{task.deadline || deadlineLabels[task.deadlineStatus]}<em className={`evidence ${task.deadlineStatus}`}>{deadlineLabels[task.deadlineStatus]}</em></span>
-                      <span><em className={`priority ${task.priority}`}>{priorityLabels[task.priority]}</em></span>
-                    </div>
+                    editingTaskId === task.id && taskDraft ? (
+                      <div className="task-edit-row" key={task.id}>
+                        <label className="task-edit-title"><span>Задача</span><input value={taskDraft.title} onChange={(event) => setTaskDraft({ ...taskDraft, title: event.target.value })} /></label>
+                        <label><span>Исполнитель</span><input value={taskDraft.owner || ""} placeholder="Не назначен" onChange={(event) => setTaskDraft({ ...taskDraft, owner: event.target.value || null })} /></label>
+                        <label><span>Срок</span><input value={taskDraft.deadline || ""} placeholder="Не указан" onChange={(event) => setTaskDraft({ ...taskDraft, deadline: event.target.value || null })} /></label>
+                        <label><span>Приоритет</span><select value={taskDraft.priority} onChange={(event) => setTaskDraft({ ...taskDraft, priority: event.target.value as Priority })}><option value="high">Высокий</option><option value="medium">Средний</option><option value="low">Низкий</option></select></label>
+                        <div className="task-edit-actions"><button className="save" type="button" disabled={!taskDraft.title.trim()} onClick={saveTaskEdit}><Save size={15} /> Сохранить</button><button type="button" onClick={cancelTaskEdit}><X size={15} /> Отмена</button></div>
+                      </div>
+                    ) : (
+                      <div className={`task-row ${completed.has(task.id) ? "done" : ""}`} key={task.id}>
+                        <span className="task-name"><button className="task-check-button" type="button" aria-label={`Отметить задачу «${task.title}»`} onClick={() => toggleTask(task.id)}>{completed.has(task.id) && <Check size={13} />}</button><span><b>{task.title}</b><small>{task.rationale}</small><span className="task-mobile-meta"><em>{task.owner || "Не назначен"}</em><em>{task.deadline || deadlineLabels[task.deadlineStatus]}</em></span></span><button className="task-edit-button" type="button" aria-label={`Редактировать задачу «${task.title}»`} onClick={() => startTaskEdit(task)}><Pencil size={14} /></button></span>
+                        <span>{task.owner || "Не назначен"}</span>
+                        <span>{task.deadline || deadlineLabels[task.deadlineStatus]}<em className={`evidence ${task.deadlineStatus}`}>{deadlineLabels[task.deadlineStatus]}</em></span>
+                        <span><em className={`priority ${task.priority}`}>{priorityLabels[task.priority]}</em></span>
+                      </div>
+                    )
                   ))}
                 </div>
               </article>
@@ -336,7 +379,7 @@ export default function App() {
                 </div>
               </article>
             </div>
-            <button className="reset-button" type="button" onClick={() => { setResult(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}><RotateCcw size={16} /> Новый анализ</button>
+            <button className="reset-button" type="button" onClick={() => { setResult(null); cancelTaskEdit(); window.scrollTo({ top: 0, behavior: "smooth" }); }}><RotateCcw size={16} /> Новый анализ</button>
           </section>
         )}
       </main>
